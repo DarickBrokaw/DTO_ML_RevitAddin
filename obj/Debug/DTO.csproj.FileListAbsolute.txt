@@ -83,3 +83,7 @@ D:\DTO\obj\Debug\DTO.csproj.CopyComplete
 D:\DTO\obj\Debug\DTO.dll
 D:\DTO\obj\Debug\DTO.pdb
 D:\DTO\bin\Debug\DTO.dll.config
+D:\DTO_ML_RevitAddin\obj\Debug\DTO.csproj.AssemblyReference.cache
+D:\DTO_ML_RevitAddin\obj\Debug\DTO.csproj.CoreCompileInputs.cache
+D:\DTO_ML_RevitAddin\obj\Debug\DTO.dll
+D:\DTO_ML_RevitAddin\obj\Debug\DTO.pdb

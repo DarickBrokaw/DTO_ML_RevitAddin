@@ -115,6 +115,17 @@ namespace EventLogger // Namespace must match the folder name
         {
             try
             {
+                //Start new code for GitHubReleaseChecker
+                var checker = new GitHubReleaseChecker();
+                var owner = "exampleOwner";
+                var repoName = "exampleRepo";
+                var latestVersion = await checker.GetLatestVersionAsync(owner, repoName);
+                // Log the latest version information to a file
+                using (StreamWriter sw = new StreamWriter(LogFilePath, true))
+                {
+                    sw.WriteLine($"{DateTime.Now}, {Environment.UserName}, LatestVersion, {latestVersion}");
+                }
+                //End new code for GitHubReleaseChecker
 
                 return ExternalDBApplicationResult.Succeeded;
             }
