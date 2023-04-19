@@ -24,6 +24,7 @@ using Autodesk.Revit.ApplicationServices;  // For ControlledApplication
 using Autodesk.Revit.Attributes; // For Transaction, Regeneration
 using Autodesk.Revit.DB; // For ExternalDBApplicationResult
 using Autodesk.Revit.DB.Events; // For DocumentCreatedEventArgs, DocumentOpenedEventArgs, DocumentClosingEventArgs
+using GitHubConnect; // For GitHubReleaseChecker
 
 /// <summary>
 /// The EventLogger namespace is responsible for logging events related to Revit documents
@@ -115,7 +116,7 @@ namespace EventLogger // Namespace must match the folder name
         {
             try
             {
-                //Start new code for GitHubReleaseChecker
+                //Start new code for GitHubConnect
                 var checker = new GitHubReleaseChecker();
                 var owner = "exampleOwner";
                 var repoName = "exampleRepo";
@@ -125,7 +126,7 @@ namespace EventLogger // Namespace must match the folder name
                 {
                     sw.WriteLine($"{DateTime.Now}, {Environment.UserName}, LatestVersion, {latestVersion}");
                 }
-                //End new code for GitHubReleaseChecker
+                //End new code for GitHubConnect
 
                 return ExternalDBApplicationResult.Succeeded;
             }
