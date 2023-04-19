@@ -120,8 +120,8 @@ namespace EventLogger // Namespace must match the folder name
             {
                 //Start new code for GitHubConnect
                 var checker = new GitHubConnect.GitHubReleaseChecker();
-                var owner = "exampleOwner";
-                var repoName = "exampleRepo";
+                var owner = "DarickBrokaw";
+                var repoName = "DTO_ML_RevitAddin";
                 //var latestVersion = await checker.GetLatestVersionAsync(owner, repoName);
                 var task = Task.Run(() => checker.GetLatestVersionAsync(owner, repoName));
                 var latestVersion = task.Result;
