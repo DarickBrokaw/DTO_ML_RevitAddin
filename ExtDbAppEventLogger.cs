@@ -25,6 +25,7 @@ using Autodesk.Revit.Attributes; // For Transaction, Regeneration
 using Autodesk.Revit.DB; // For ExternalDBApplicationResult
 using Autodesk.Revit.DB.Events; // For DocumentCreatedEventArgs, DocumentOpenedEventArgs, DocumentClosingEventArgs
 using GitHubConnect; // For GitHubReleaseChecker
+using System.Threading.Tasks; // For Task async await latestVersion
 
 /// <summary>
 /// The EventLogger namespace is responsible for logging events related to Revit documents
@@ -112,15 +113,18 @@ namespace EventLogger // Namespace must match the folder name
             }
         }
 
+        //public async Task<ExternalDBApplicationResult> OnShutdown(ControlledApplication ctlApp)
         public ExternalDBApplicationResult OnShutdown(ControlledApplication ctlApp)
         {
             try
             {
                 //Start new code for GitHubConnect
-                var checker = new GitHubReleaseChecker();
+                var checker = new GitHubConnect.GitHubReleaseChecker();
                 var owner = "exampleOwner";
                 var repoName = "exampleRepo";
-                var latestVersion = await checker.GetLatestVersionAsync(owner, repoName);
+                //var latestVersion = await checker.GetLatestVersionAsync(owner, repoName);
+                var task = Task.Run(() => checker.GetLatestVersionAsync(owner, repoName));
+                var latestVersion = task.Result;
                 // Log the latest version information to a file
                 using (StreamWriter sw = new StreamWriter(LogFilePath, true))
                 {
