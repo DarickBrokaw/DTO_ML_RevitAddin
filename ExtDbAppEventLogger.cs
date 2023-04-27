@@ -96,7 +96,7 @@ namespace EventLogger // Namespace must match the folder name
 
             using (StreamWriter sw = new StreamWriter(LogFilePath, true))
             {
-                sw.WriteLine($"{DateTime.Now}, {Environment.UserName}, Closing, {vb}, {vn}, {pro}, {docPath}");
+                sw.WriteLine($"{DateTime.Now}, {Environment.UserName}, Opened, {vb}, {vn}, {pro}, {docPath}");
             }
         }
 
@@ -128,12 +128,27 @@ namespace EventLogger // Namespace must match the folder name
                 // Log the latest version information to a file
                 using (StreamWriter sw = new StreamWriter(LogFilePath, true))
                 {
-                    sw.WriteLine($"{DateTime.Now}, {Environment.UserName}, LatestVersion, {latestVersion}");
+                    sw.WriteLine($"{DateTime.Now}, {Environment.UserName}, OnShutdown, GitHubReleaseLatestVersion, {latestVersion}");
                 }
                 //End new code for GitHubConnect
 
                 return ExternalDBApplicationResult.Succeeded;
             }
+            // start test
+            //catch (System.Reflection.TargetInvocationException ex)
+            //{
+            //    if (ex.InnerException != null)
+            //    {
+            //        MessageBox.Show(ex.InnerException.Message);
+            //        return ExternalDBApplicationResult.Failed;
+            //    }
+            //    else
+            //    {
+            //        MessageBox.Show(ex.Message);
+            //        return ExternalDBApplicationResult.Failed;
+            //    }
+            //}
+            //end test
             catch (Exception ex)
             {
                 MessageBox.Show(ex.ToString());
