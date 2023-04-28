@@ -26,6 +26,7 @@ using Autodesk.Revit.DB; // For ExternalDBApplicationResult
 using Autodesk.Revit.DB.Events; // For DocumentCreatedEventArgs, DocumentOpenedEventArgs, DocumentClosingEventArgs
 using GitHubConnect; // For GitHubReleaseChecker
 using System.Threading.Tasks; // For Task async await latestVersion
+using static GitHubConnect.GitHubReleaseChecker;
 
 /// <summary>
 /// The EventLogger namespace is responsible for logging events related to Revit documents
@@ -124,31 +125,22 @@ namespace EventLogger // Namespace must match the folder name
                 var repoName = "DTO_ML_RevitAddin";
                 //var latestVersion = await checker.GetLatestVersionAsync(owner, repoName);
                 var task = Task.Run(() => checker.GetLatestVersionAsync(owner, repoName));
-                var latestVersion = task.Result;
+                GitHubRelease latestVersion = task.Result;
                 // Log the latest version information to a file
                 using (StreamWriter sw = new StreamWriter(LogFilePath, true))
                 {
                     sw.WriteLine($"{DateTime.Now}, {Environment.UserName}, OnShutdown, GitHubReleaseLatestVersion, {latestVersion}");
                 }
+
+                // Download release assets to a folder
+                string destinationFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{repoName}-{latestVersion.TagName}");
+                Task.Run(() => checker.DownloadReleaseAssetsAsync(latestVersion, destinationFolder)).Wait();
+
                 //End new code for GitHubConnect
 
                 return ExternalDBApplicationResult.Succeeded;
             }
-            // start test
-            //catch (System.Reflection.TargetInvocationException ex)
-            //{
-            //    if (ex.InnerException != null)
-            //    {
-            //        MessageBox.Show(ex.InnerException.Message);
-            //        return ExternalDBApplicationResult.Failed;
-            //    }
-            //    else
-            //    {
-            //        MessageBox.Show(ex.Message);
-            //        return ExternalDBApplicationResult.Failed;
-            //    }
-            //}
-            //end test
+
             catch (Exception ex)
             {
                 MessageBox.Show(ex.ToString());
