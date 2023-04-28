@@ -132,9 +132,21 @@ namespace EventLogger // Namespace must match the folder name
                     sw.WriteLine($"{DateTime.Now}, {Environment.UserName}, OnShutdown, GitHubReleaseLatestVersion, {latestVersion.TagName}");
                 }
 
-                // Download release assets to a folder
-                string destinationFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{repoName}-{latestVersion.TagName}");
-                Task.Run(() => checker.DownloadReleaseAssetsAsync(latestVersion, destinationFolder)).Wait();
+                // Read RvtAddinInstalledVersion key from DTO.dll.config
+                var config = ConfigurationManager.OpenExeConfiguration(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                string installedVersion = config.AppSettings.Settings["RvtAddinInstalledVersion"].Value;
+
+                // Compare installed version with latest version and download release assets if they don't match
+                if (installedVersion != latestVersion.TagName)
+                {
+                    string destinationFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{repoName}-{latestVersion.TagName}");
+                    Task.Run(() => checker.DownloadReleaseAssetsAsync(latestVersion, destinationFolder)).Wait();
+
+                    // Update RvtAddinInstalledVersion value in DTO.dll.config to latestVersion.TagName
+                    config.AppSettings.Settings["RvtAddinInstalledVersion"].Value = latestVersion.TagName;
+                    config.Save(ConfigurationSaveMode.Modified);
+                    ConfigurationManager.RefreshSection("appSettings");
+                }
 
                 //End new code for GitHubConnect
 
