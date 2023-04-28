@@ -129,7 +129,7 @@ namespace EventLogger // Namespace must match the folder name
                 // Log the latest version information to a file
                 using (StreamWriter sw = new StreamWriter(LogFilePath, true))
                 {
-                    sw.WriteLine($"{DateTime.Now}, {Environment.UserName}, OnShutdown, GitHubReleaseLatestVersion, {latestVersion}");
+                    sw.WriteLine($"{DateTime.Now}, {Environment.UserName}, OnShutdown, GitHubReleaseLatestVersion, {latestVersion.TagName}");
                 }
 
                 // Download release assets to a folder
