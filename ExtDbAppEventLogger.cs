@@ -27,6 +27,7 @@ using Autodesk.Revit.DB.Events; // For DocumentCreatedEventArgs, DocumentOpenedE
 using GitHubConnect; // For GitHubReleaseChecker
 using System.Threading.Tasks; // For Task async await latestVersion
 using static GitHubConnect.GitHubReleaseChecker;
+using ReplaceFilesWithNew;
 
 /// <summary>
 /// The EventLogger namespace is responsible for logging events related to Revit documents
@@ -146,6 +147,9 @@ namespace EventLogger // Namespace must match the folder name
                     config.AppSettings.Settings["RvtAddinInstalledVersion"].Value = latestVersion.TagName;
                     config.Save(ConfigurationSaveMode.Modified);
                     ConfigurationManager.RefreshSection("appSettings");
+                    // Replace files in Revit Addins folder with new files from downloaded release assets folder
+                    RevitAddinUpdater.UpdateRevitAddin();
+
                 }
 
                 //End new code for GitHubConnect
