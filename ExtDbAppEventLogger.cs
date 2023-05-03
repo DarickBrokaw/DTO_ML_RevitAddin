@@ -27,7 +27,6 @@ using Autodesk.Revit.DB.Events; // For DocumentCreatedEventArgs, DocumentOpenedE
 using GitHubConnect; // For GitHubReleaseChecker
 using System.Threading.Tasks; // For Task async await latestVersion
 using static GitHubConnect.GitHubReleaseChecker;
-using FileManagement;
 using System.Xml.Linq;
 
 /// <summary>
