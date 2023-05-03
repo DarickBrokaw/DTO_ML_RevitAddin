@@ -27,7 +27,8 @@ using Autodesk.Revit.DB.Events; // For DocumentCreatedEventArgs, DocumentOpenedE
 using GitHubConnect; // For GitHubReleaseChecker
 using System.Threading.Tasks; // For Task async await latestVersion
 using static GitHubConnect.GitHubReleaseChecker;
-using ReplaceFilesWithNew;
+using FileManagement;
+using System.Xml.Linq;
 
 /// <summary>
 /// The EventLogger namespace is responsible for logging events related to Revit documents
@@ -140,16 +141,19 @@ namespace EventLogger // Namespace must match the folder name
                 // Compare installed version with latest version and download release assets if they don't match
                 if (installedVersion != latestVersion.TagName)
                 {
-                    string destinationFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{repoName}-{latestVersion.TagName}");
-                    Task.Run(() => checker.DownloadReleaseAssetsAsync(latestVersion, destinationFolder)).Wait();
+                    string downloadFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{repoName}-{latestVersion.TagName}");
+                    string zipFilePath = Path.Combine(downloadFolder, $"{latestVersion.TagName}.zip");
+                    Task.Run(() => checker.DownloadReleaseAssetsAsync(latestVersion,  downloadFolder)).Wait();
+                    string destinationPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Autodesk", "Revit", "Addins", "2023");
+                    //FileUtils.ExtractAndMoveFiles(downloadFolder, zipFilePath, destinationPath);
 
                     // Update RvtAddinInstalledVersion value in DTO.dll.config to latestVersion.TagName
                     config.AppSettings.Settings["RvtAddinInstalledVersion"].Value = latestVersion.TagName;
+                    config.AppSettings.Settings["DownloadFolderPath"].Value = downloadFolder;
+                    config.AppSettings.Settings["ZipFilePath"].Value = zipFilePath;
+                    config.AppSettings.Settings["DestinationPath"].Value = destinationPath;
                     config.Save(ConfigurationSaveMode.Modified);
                     ConfigurationManager.RefreshSection("appSettings");
-                    // Replace files in Revit Addins folder with new files from downloaded release assets folder
-                    RevitAddinUpdater.UpdateRevitAddin();
-
                 }
 
                 //End new code for GitHubConnect
