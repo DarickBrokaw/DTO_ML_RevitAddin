@@ -28,6 +28,7 @@ using GitHubConnect; // For GitHubReleaseChecker
 using System.Threading.Tasks; // For Task async await latestVersion
 using static GitHubConnect.GitHubReleaseChecker;
 using System.Xml.Linq;
+using ComputeOptimization;
 
 /// <summary>
 /// The EventLogger namespace is responsible for logging events related to Revit documents
@@ -56,6 +57,8 @@ namespace EventLogger // Namespace must match the folder name
         {
             try // Catch any exceptions
             {
+                ComputeOptimization.Program.Main(null); // Add this line to run ComputeOptimization
+
                 _cachedCtrlApp = ctrlApp; // Cache the ControlledApplication
 
                 _cachedCtrlApp.DocumentCreated += new EventHandler<DocumentCreatedEventArgs>(CachedCtrlApp_DocumentCreated); // Subscribe to the DocumentCreated event
