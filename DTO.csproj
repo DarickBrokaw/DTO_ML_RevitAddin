@@ -98,7 +98,12 @@
     </None>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\FileManager\FileManager.csproj">
+      <Project>{0A28B2AC-2503-455C-A283-523D5AFA8A14}</Project>
+      <Name>FileManager</Name>
+    </ProjectReference>
+  </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Images\Collect.bmp" />
     <EmbeddedResource Include="Images\DTO.bmp" />
