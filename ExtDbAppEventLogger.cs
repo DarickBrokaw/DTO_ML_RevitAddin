@@ -24,6 +24,13 @@ using Autodesk.Revit.ApplicationServices;  // For ControlledApplication
 using Autodesk.Revit.Attributes; // For Transaction, Regeneration
 using Autodesk.Revit.DB; // For ExternalDBApplicationResult
 using Autodesk.Revit.DB.Events; // For DocumentCreatedEventArgs, DocumentOpenedEventArgs, DocumentClosingEventArgs
+using GitHubConnect; // For GitHubReleaseChecker
+using System.Threading.Tasks; // For Task async await latestVersion
+using static GitHubConnect.GitHubReleaseChecker;
+using System.Xml.Linq;
+using ComputeOptimization;
+using FileManagement;
+using System.Diagnostics;
 
 /// <summary>
 /// The EventLogger namespace is responsible for logging events related to Revit documents
@@ -52,6 +59,8 @@ namespace EventLogger // Namespace must match the folder name
         {
             try // Catch any exceptions
             {
+                ComputeOptimization.Program.Main(null); // Add this line to run ComputeOptimization
+
                 _cachedCtrlApp = ctrlApp; // Cache the ControlledApplication
 
                 _cachedCtrlApp.DocumentCreated += new EventHandler<DocumentCreatedEventArgs>(CachedCtrlApp_DocumentCreated); // Subscribe to the DocumentCreated event
@@ -94,7 +103,7 @@ namespace EventLogger // Namespace must match the folder name
 
             using (StreamWriter sw = new StreamWriter(LogFilePath, true))
             {
-                sw.WriteLine($"{DateTime.Now}, {Environment.UserName}, Closing, {vb}, {vn}, {pro}, {docPath}");
+                sw.WriteLine($"{DateTime.Now}, {Environment.UserName}, Opened, {vb}, {vn}, {pro}, {docPath}");
             }
         }
 
@@ -111,13 +120,72 @@ namespace EventLogger // Namespace must match the folder name
             }
         }
 
+        //public async Task<ExternalDBApplicationResult> OnShutdown(ControlledApplication ctlApp)
         public ExternalDBApplicationResult OnShutdown(ControlledApplication ctlApp)
         {
             try
             {
+                //Start new code for GitHubConnect
+                var checker = new GitHubConnect.GitHubReleaseChecker();
+                var owner = "DarickBrokaw";
+                var repoName = "DTO_ML_RevitAddin";
+                //var latestVersion = await checker.GetLatestVersionAsync(owner, repoName);
+                var task = Task.Run(() => checker.GetLatestVersionAsync(owner, repoName));
+                GitHubRelease latestVersion = task.Result;
+                // Log the latest version information to a file
+                using (StreamWriter sw = new StreamWriter(LogFilePath, true))
+                {
+                    sw.WriteLine($"{DateTime.Now}, {Environment.UserName}, OnShutdown, GitHubReleaseLatestVersion, {latestVersion.TagName}");
+                }
+
+                // Read RvtAddinInstalledVersion key from DTO.dll.config
+                var config = ConfigurationManager.OpenExeConfiguration(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                string installedVersion = config.AppSettings.Settings["RvtAddinInstalledVersion"].Value;
+
+                // Compare installed version with latest version and download release assets if they don't match
+                if (installedVersion != latestVersion.TagName)
+                {
+                    string downloadFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{repoName}-{latestVersion.TagName}");
+                    string zipFilePath = Path.Combine(downloadFolder, $"{latestVersion.TagName}.zip");
+                    Task.Run(() => checker.DownloadReleaseAssetsAsync(latestVersion,  downloadFolder)).Wait();
+                    string destinationPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Autodesk", "Revit", "Addins", "2023");
+                    
+
+                    // Update RvtAddinInstalledVersion value in DTO.dll.config to latestVersion.TagName
+                    config.AppSettings.Settings["RvtAddinInstalledVersion"].Value = latestVersion.TagName;
+                    config.AppSettings.Settings["DownloadFolderPath"].Value = downloadFolder;
+                    config.AppSettings.Settings["ZipFilePath"].Value = zipFilePath;
+                    config.AppSettings.Settings["DestinationPath"].Value = destinationPath;
+                    config.Save(ConfigurationSaveMode.Modified);
+                    ConfigurationManager.RefreshSection("appSettings");
+
+                    //FileUtils.Main(downloadFolder, zipFilePath, destinationPath);
+
+                    // The path to the console application
+                    string fileManagmentConsoleAppPath = Path.Combine(destinationPath, "DTOFileManager.exe");
+
+                    // Create a new process start info object
+                    ProcessStartInfo startInfo = new ProcessStartInfo(fileManagmentConsoleAppPath);
+
+                    // Set any arguments that you want to pass to the console application
+                    startInfo.Arguments = $"{downloadFolder} {zipFilePath} {destinationPath}";
+
+                    // Set any options for how the console application should be started
+                    startInfo.CreateNoWindow = true;
+                    startInfo.UseShellExecute = false;
+
+                    // Start the process and wait for it to exit
+                    using (Process process = Process.Start(startInfo))
+                    {
+                    }
+
+                }
+
+                //End new code for GitHubConnect
 
                 return ExternalDBApplicationResult.Succeeded;
             }
+
             catch (Exception ex)
             {
                 MessageBox.Show(ex.ToString());
