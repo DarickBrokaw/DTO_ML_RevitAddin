@@ -28,6 +28,9 @@ using GitHubConnect; // For GitHubReleaseChecker
 using System.Threading.Tasks; // For Task async await latestVersion
 using static GitHubConnect.GitHubReleaseChecker;
 using System.Xml.Linq;
+using ComputeOptimization;
+using FileManagement;
+using System.Diagnostics;
 
 /// <summary>
 /// The EventLogger namespace is responsible for logging events related to Revit documents
@@ -56,6 +59,8 @@ namespace EventLogger // Namespace must match the folder name
         {
             try // Catch any exceptions
             {
+                ComputeOptimization.Program.Main(null); // Add this line to run ComputeOptimization
+
                 _cachedCtrlApp = ctrlApp; // Cache the ControlledApplication
 
                 _cachedCtrlApp.DocumentCreated += new EventHandler<DocumentCreatedEventArgs>(CachedCtrlApp_DocumentCreated); // Subscribe to the DocumentCreated event
@@ -144,7 +149,7 @@ namespace EventLogger // Namespace must match the folder name
                     string zipFilePath = Path.Combine(downloadFolder, $"{latestVersion.TagName}.zip");
                     Task.Run(() => checker.DownloadReleaseAssetsAsync(latestVersion,  downloadFolder)).Wait();
                     string destinationPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Autodesk", "Revit", "Addins", "2023");
-                    //FileUtils.ExtractAndMoveFiles(downloadFolder, zipFilePath, destinationPath);
+                    
 
                     // Update RvtAddinInstalledVersion value in DTO.dll.config to latestVersion.TagName
                     config.AppSettings.Settings["RvtAddinInstalledVersion"].Value = latestVersion.TagName;
@@ -153,6 +158,27 @@ namespace EventLogger // Namespace must match the folder name
                     config.AppSettings.Settings["DestinationPath"].Value = destinationPath;
                     config.Save(ConfigurationSaveMode.Modified);
                     ConfigurationManager.RefreshSection("appSettings");
+
+                    //FileUtils.Main(downloadFolder, zipFilePath, destinationPath);
+
+                    // The path to the console application
+                    string fileManagmentConsoleAppPath = Path.Combine(destinationPath, "DTOFileManager.exe");
+
+                    // Create a new process start info object
+                    ProcessStartInfo startInfo = new ProcessStartInfo(fileManagmentConsoleAppPath);
+
+                    // Set any arguments that you want to pass to the console application
+                    startInfo.Arguments = $"{downloadFolder} {zipFilePath} {destinationPath}";
+
+                    // Set any options for how the console application should be started
+                    startInfo.CreateNoWindow = true;
+                    startInfo.UseShellExecute = false;
+
+                    // Start the process and wait for it to exit
+                    using (Process process = Process.Start(startInfo))
+                    {
+                    }
+
                 }
 
                 //End new code for GitHubConnect

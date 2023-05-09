@@ -83,10 +83,12 @@ D:\DTO\obj\Debug\DTO.csproj.CopyComplete
 D:\DTO\obj\Debug\DTO.dll
 D:\DTO\obj\Debug\DTO.pdb
 D:\DTO\bin\Debug\DTO.dll.config
+D:\DTO_ML_RevitAddin\bin\Debug\FileManagement.cs
 D:\DTO_ML_RevitAddin\bin\Debug\DTO.addin
 D:\DTO_ML_RevitAddin\bin\Debug\DTO.dll.config
 D:\DTO_ML_RevitAddin\bin\Debug\DTO.dll
 D:\DTO_ML_RevitAddin\bin\Debug\DTO.pdb
+D:\DTO_ML_RevitAddin\bin\Debug\DTOFileManager.exe
 D:\DTO_ML_RevitAddin\bin\Debug\Microsoft.Bcl.AsyncInterfaces.dll
 D:\DTO_ML_RevitAddin\bin\Debug\RevitAPI.dll
 D:\DTO_ML_RevitAddin\bin\Debug\RevitAPIUI.dll
@@ -155,6 +157,8 @@ D:\DTO_ML_RevitAddin\bin\Debug\Autodesk.UI.Windows.dll
 D:\DTO_ML_RevitAddin\bin\Debug\Autodesk.UI.Themes.dll
 D:\DTO_ML_RevitAddin\bin\Debug\Xceed.Wpf.AvalonDock.dll
 D:\DTO_ML_RevitAddin\bin\Debug\CompositionServices.dll
+D:\DTO_ML_RevitAddin\bin\Debug\DTOFileManager.pdb
+D:\DTO_ML_RevitAddin\bin\Debug\DTOFileManager.exe.config
 D:\DTO_ML_RevitAddin\bin\Debug\Microsoft.Bcl.AsyncInterfaces.xml
 D:\DTO_ML_RevitAddin\bin\Debug\RevitAPI.xml
 D:\DTO_ML_RevitAddin\bin\Debug\RevitAPIUI.xml
