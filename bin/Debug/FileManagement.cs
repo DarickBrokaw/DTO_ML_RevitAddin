@@ -66,7 +66,7 @@ namespace FileManagement
             process.WaitForExit();
 
             // Delete the temporary folder
-            //Directory.Delete(downloadFolder, true);
+            Directory.Delete(downloadFolder, true);
         }
     }
 }
