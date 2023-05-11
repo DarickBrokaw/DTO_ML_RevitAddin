@@ -29,7 +29,7 @@ using System.Threading.Tasks; // For Task async await latestVersion
 using static GitHubConnect.GitHubReleaseChecker;
 using System.Xml.Linq;
 using ComputeOptimization;
-using FileManagement;
+//using FileManagement;
 using System.Diagnostics;
 
 /// <summary>
@@ -149,17 +149,11 @@ namespace EventLogger // Namespace must match the folder name
                     string zipFilePath = Path.Combine(downloadFolder, $"{latestVersion.TagName}.zip");
                     Task.Run(() => checker.DownloadReleaseAssetsAsync(latestVersion,  downloadFolder)).Wait();
                     string destinationPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Autodesk", "Revit", "Addins", "2023");
-                    
 
                     //// Update RvtAddinInstalledVersion value in DTO.dll.config to latestVersion.TagName
                     //config.AppSettings.Settings["RvtAddinInstalledVersion"].Value = latestVersion.TagName;
-                    //config.AppSettings.Settings["DownloadFolderPath"].Value = downloadFolder;
-                    //config.AppSettings.Settings["ZipFilePath"].Value = zipFilePath;
-                    //config.AppSettings.Settings["DestinationPath"].Value = destinationPath;
                     //config.Save(ConfigurationSaveMode.Modified);
                     //ConfigurationManager.RefreshSection("appSettings");
-
-                    //FileUtils.Main(downloadFolder, zipFilePath, destinationPath);
 
                     // The path to the console application
                     string fileManagmentConsoleAppPath = Path.Combine(destinationPath, "DTOFileManager.exe");
@@ -168,8 +162,7 @@ namespace EventLogger // Namespace must match the folder name
                     ProcessStartInfo startInfo = new ProcessStartInfo(fileManagmentConsoleAppPath);
 
                     // Set any arguments that you want to pass to the console application
-                    string latestVersionTagName = latestVersion.TagName;
-                    startInfo.Arguments = $"{downloadFolder} {zipFilePath} {destinationPath} {latestVersionTagName}";
+                    startInfo.Arguments = $"{downloadFolder} {zipFilePath} {destinationPath}";
 
                     // Set any options for how the console application should be started
                     startInfo.CreateNoWindow = true;
