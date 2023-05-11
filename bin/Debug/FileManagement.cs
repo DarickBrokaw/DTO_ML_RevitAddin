@@ -2,6 +2,7 @@
 using System.IO;
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Configuration; // For ConfigurationManager
 
 namespace FileManagement
 {
@@ -12,13 +13,14 @@ namespace FileManagement
             string downloadFolder = args[0];
             string zipFilePath = args[1];
             string destinationPath = args[2];
+            string latestVersionTagName = args[3];
 
-            FileUtils.ExtractAndMoveFiles(downloadFolder, zipFilePath, destinationPath);
+            FileUtils.ExtractAndMoveFiles(downloadFolder, zipFilePath, destinationPath, latestVersionTagName);
         }
     }
     static class FileUtils
     {
-        public static void ExtractAndMoveFiles(string downloadFolder, string zipFilePath, string destinationPath)
+        public static void ExtractAndMoveFiles(string downloadFolder, string zipFilePath, string destinationPath, string latestVersionTagName)
         {
             // Extract the zip file to a temporary folder
             ZipFile.ExtractToDirectory(zipFilePath, downloadFolder);
@@ -67,6 +69,16 @@ namespace FileManagement
 
             // Delete the temporary folder
             Directory.Delete(downloadFolder, true);
+
+            // Read RvtAddinInstalledVersion key from DTO.dll.config
+            var config = ConfigurationManager.OpenExeConfiguration(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            // Update RvtAddinInstalledVersion value in DTO.dll.config to latestVersion.TagName
+            config.AppSettings.Settings["RvtAddinInstalledVersion"].Value = latestVersionTagName;
+            config.AppSettings.Settings["DownloadFolderPath"].Value = downloadFolder;
+            config.AppSettings.Settings["ZipFilePath"].Value = zipFilePath;
+            config.AppSettings.Settings["DestinationPath"].Value = destinationPath;
+            config.Save(ConfigurationSaveMode.Modified);
+            ConfigurationManager.RefreshSection("appSettings");
         }
     }
 }
