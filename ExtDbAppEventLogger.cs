@@ -31,6 +31,7 @@ using System.Xml.Linq;
 using ComputeOptimization;
 //using FileManagement;
 using System.Diagnostics;
+using System.Threading;
 
 /// <summary>
 /// The EventLogger namespace is responsible for logging events related to Revit documents
@@ -49,7 +50,7 @@ namespace EventLogger // Namespace must match the folder name
         #region Cached Variables
 
         public static ControlledApplication _cachedCtrlApp; // Cached ControlledApplication
-        String LogFilePath = ConfigurationManager.OpenExeConfiguration(System.Reflection.Assembly.GetExecutingAssembly().Location).AppSettings.Settings["LogFilePath"].Value; // Log file path
+        String logFilePath = ConfigurationManager.OpenExeConfiguration(System.Reflection.Assembly.GetExecutingAssembly().Location).AppSettings.Settings["logFilePath"].Value; // Log file path
 
         #endregion
 
@@ -88,7 +89,7 @@ namespace EventLogger // Namespace must match the folder name
                 docPath = "NotSaved"; // Set the document path name to "NotSaved"
             }
 
-            using (StreamWriter sw = new StreamWriter(LogFilePath, true)) // Open the log file for appending
+            using (StreamWriter sw = new StreamWriter(logFilePath, true)) // Open the log file for appending
             {
                 sw.WriteLine($"{DateTime.Now}, {Environment.UserName}, Closing, {vb}, {vn}, {pro}, {docPath}"); // Write the log entry
             }
@@ -101,7 +102,7 @@ namespace EventLogger // Namespace must match the folder name
             string pro = _cachedCtrlApp.Product.ToString();
             string docPath = e.Document.PathName;
 
-            using (StreamWriter sw = new StreamWriter(LogFilePath, true))
+            using (StreamWriter sw = new StreamWriter(logFilePath, true))
             {
                 sw.WriteLine($"{DateTime.Now}, {Environment.UserName}, Opened, {vb}, {vn}, {pro}, {docPath}");
             }
@@ -114,7 +115,7 @@ namespace EventLogger // Namespace must match the folder name
             string pro = _cachedCtrlApp.Product.ToString();
             // No PathName for new documents
 
-            using (StreamWriter sw = new StreamWriter(LogFilePath, true))
+            using (StreamWriter sw = new StreamWriter(logFilePath, true))
             {
                 sw.WriteLine($"{DateTime.Now}, {Environment.UserName}, Created, {vb}, {vn}, {pro}, NewNoPath");
             }
@@ -133,7 +134,7 @@ namespace EventLogger // Namespace must match the folder name
                 var task = Task.Run(() => checker.GetLatestVersionAsync(owner, repoName));
                 GitHubRelease latestVersion = task.Result;
                 // Log the latest version information to a file
-                using (StreamWriter sw = new StreamWriter(LogFilePath, true))
+                using (StreamWriter sw = new StreamWriter(logFilePath, true))
                 {
                     sw.WriteLine($"{DateTime.Now}, {Environment.UserName}, OnShutdown, GitHubReleaseLatestVersion, {latestVersion.TagName}");
                 }
@@ -145,34 +146,22 @@ namespace EventLogger // Namespace must match the folder name
                 // Compare installed version with latest version and download release assets if they don't match
                 if (installedVersion != latestVersion.TagName)
                 {
+                    // **WARNING** downloadFolder and destinationPath are defined twice in this code.  This is not good practice.  Need to refactor this code to remove the duplication.
                     string downloadFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{repoName}-{latestVersion.TagName}");
-                    string zipFilePath = Path.Combine(downloadFolder, $"{latestVersion.TagName}.zip");
-                    Task.Run(() => checker.DownloadReleaseAssetsAsync(latestVersion,  downloadFolder)).Wait();
                     string destinationPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Autodesk", "Revit", "Addins", "2023");
+                    // **WARNING** end of duplicated code
 
-                    //// Update RvtAddinInstalledVersion value in DTO.dll.config to latestVersion.TagName
-                    //config.AppSettings.Settings["RvtAddinInstalledVersion"].Value = latestVersion.TagName;
-                    //config.Save(ConfigurationSaveMode.Modified);
-                    //ConfigurationManager.RefreshSection("appSettings");
+                    // First execution, extract the zip file of downloaded release . The First and Second execution were seperated to be able to replace the FileManagement.cs while it is not running.
+                    string operation1 = "ExtractAndMoveFiles";
+                    ExecuteOperation(operation1, repoName, logFilePath, latestVersion, checker);
 
-                    // The path to the console application
-                    string fileManagmentConsoleAppPath = Path.Combine(destinationPath, "DTOFileManager.exe");
 
-                    // Create a new process start info object
-                    ProcessStartInfo startInfo = new ProcessStartInfo(fileManagmentConsoleAppPath);
+                    // Copy the FileManagement.cs file from the download folder to the destination path
+                    CopyFileManagement(downloadFolder, destinationPath);
 
-                    // Set any arguments that you want to pass to the console application
-                    startInfo.Arguments = $"{downloadFolder} {zipFilePath} {destinationPath}";
-
-                    // Set any options for how the console application should be started
-                    startInfo.CreateNoWindow = true;
-                    startInfo.UseShellExecute = false;
-
-                    // Start the process and wait for it to exit
-                    using (Process process = Process.Start(startInfo))
-                    {
-                    }
-
+                    // Second execution
+                    string operation2 = "CopyAndDelete";
+                    ExecuteOperation(operation2, repoName, logFilePath, latestVersion, checker);
                 }
 
                 //End new code for GitHubConnect
@@ -187,6 +176,51 @@ namespace EventLogger // Namespace must match the folder name
             }
         }
 
-        #endregion       
+        // this is used to execute the same code for two different operations (ExtractAndMoveFiles and CopyAndDelete) above.
+        private static void ExecuteOperation(string operation, string repoName, string logFilePath, GitHubRelease latestVersion, GitHubReleaseChecker checker)
+        {
+            string downloadFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", $"{repoName}-{latestVersion.TagName}");
+            string destinationPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Autodesk", "Revit", "Addins", "2023");
+            string zipFilePath = Path.Combine(downloadFolder, $"{latestVersion.TagName}.zip");
+            Task.Run(() => checker.DownloadReleaseAssetsAsync(latestVersion, downloadFolder)).Wait();
+
+            // The path to the console application
+            string fileManagmentConsoleAppPath = Path.Combine(destinationPath, "DTOFileManager.exe");
+
+            // Create a new process start info object
+            ProcessStartInfo startInfo = new ProcessStartInfo(fileManagmentConsoleAppPath);
+
+            // Set any arguments that you want to pass to the console application
+            startInfo.Arguments = $"{downloadFolder} {zipFilePath} {destinationPath} {operation} {logFilePath}";
+
+            // Set any options for how the console application should be started
+            startInfo.CreateNoWindow = true;
+            startInfo.UseShellExecute = false;
+
+            // Start the process and wait for it to exit
+            using (Process process = Process.Start(startInfo))
+            //{
+            //    if (operation == "ExtractAndMoveFiles")
+            //    {
+            //        process.WaitForExit();
+            //    }
+            //}
+            // Wait for 10 seconds (10000 milliseconds)
+            Thread.Sleep(1000);
+        }
+        #endregion
+        
+        private static void CopyFileManagement(string downloadFolder, string destinationPath)
+        {
+            string fileName = "DTOFileManager.exe";
+            string sourceFile = Path.Combine(downloadFolder, fileName);
+            string destFile = Path.Combine(destinationPath, fileName);
+
+            if (File.Exists(sourceFile))
+            {
+                File.Copy(sourceFile, destFile, true);
+            }
+        }
+
     }
 }
